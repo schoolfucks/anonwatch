@@ -1,86 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Anon YouTube Viewer</title>
+  <meta charset="UTF-8">
+  <title>AnonTube via File</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #eee;
-      padding: 2rem;
-    }
-    h1 { color: #0f0; }
-    input, button {
-      padding: 0.5rem;
-      margin: 0.5rem 0;
-      width: 100%;
-    }
-    .video-list {
-      margin-top: 1rem;
-    }
-    iframe {
-      width: 100%;
-      height: 360px;
-      margin-top: 1rem;
-      border: none;
-    }
-    .video-item {
-      margin-bottom: 1rem;
-      border: 1px solid #444;
-      padding: 0.5rem;
-    }
+    body { font-family: sans-serif; background: #111; color: #fff; padding: 2rem; }
+    input, button { width: 100%; padding: 0.5rem; margin: 0.5rem 0; }
+    iframe { width: 100%; height: 360px; margin-top: 1rem; border: none; }
+    .video-item { margin-bottom: 1rem; }
   </style>
 </head>
 <body>
-  <h1>🎥 Anonymous YouTube Viewer</h1>
-
-  <input type="text" id="youtubeUrl" placeholder="Paste YouTube link here"/>
-  <button onclick="addVideo()">Upload & Watch</button>
-
-  <div class="video-list" id="videoList">
-    <h2>Uploaded Videos</h2>
-    <!-- Videos will appear here -->
-  </div>
+  <h1>📼 File-Based YouTube Share</h1>
+  <input type="text" id="youtubeUrl" placeholder="Paste YouTube link" />
+  <button onclick="uploadVideo()">Upload</button>
+  <div id="videoList"><h2>📺 Shared Videos</h2></div>
 
   <script>
-    const videoList = [];
+    const API = '/videos';
 
     function extractVideoId(url) {
-      const regex = /(?:youtube\.com.*(?:v=|\/embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/;
-      const match = url.match(regex);
+      const match = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})(?:&|$)/);
       return match ? match[1] : null;
     }
 
-    function addVideo() {
+    async function uploadVideo() {
       const input = document.getElementById("youtubeUrl");
       const videoId = extractVideoId(input.value.trim());
+      if (!videoId) return alert("Invalid URL");
 
-      if (!videoId) {
-        alert("Invalid YouTube URL");
-        return;
-      }
+      await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoId })
+      });
 
-      videoList.push(videoId);
-      renderVideos();
-      input.value = "";
+      input.value = '';
+      loadVideos();
     }
 
-    function renderVideos() {
-      const container = document.getElementById("videoList");
-      container.innerHTML = "<h2>Uploaded Videos</h2>";
+    async function loadVideos() {
+      const res = await fetch(API);
+      const videos = await res.json();
+      const list = document.getElementById("videoList");
+      list.innerHTML = "<h2>📺 Shared Videos</h2>";
 
-      videoList.forEach(id => {
+      videos.forEach(id => {
         const div = document.createElement("div");
         div.className = "video-item";
-        div.innerHTML = `
-          <iframe src="https://vid.puffyan.us/embed/${id}" allowfullscreen></iframe>
-          <small>Video ID: ${id}</small>
-        `;
-        container.appendChild(div);
+        div.innerHTML = `<iframe src="https://inv.nadeko.net/embed/${id}" allowfullscreen></iframe>`;
+        list.appendChild(div);
       });
     }
+
+    loadVideos();
   </script>
 </body>
 </html>
